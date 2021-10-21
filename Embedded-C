@@ -1,0 +1,42 @@
+# message("*** ${CMAKE_CURRENT_LIST_FILE} ***")
+
+# This file is included only when cache is empty !
+# This file is included first by the 'Modules/CMakeDetermineCCompiler.cmake'
+# after the ${CMAKE_SYSTEM_NAME}-Determine-<LANG> file
+# and before than ${CMAKE_SYSTEM_NAME} file
+cmake_minimum_required(VERSION 3.10)
+
+include(${CMAKE_CURRENT_LIST_DIR}/${CMAKE_SYSTEM_NAME}-Common)
+
+# NOTE: ${CMAKE_C_COMPILER} and friends must be set before the
+# ${CMAKE_SYSTEM_NAME}-${CMAKE_C_COMPILER_ID}-<LANG> invoked
+# SO SELECT THE COMPILER!
+check_embedded_variables(C)
+if("XC8" STREQUAL "${EMBEDDED_C_COMPILER}")
+    find_embedded_compiler(C XC8 "xc8-cc;" "/opt/microchip/xc8/${EMBEDDED_C_COMPILER_VERSION}/bin;C:/Program Files/Microchip/xc8/v${EMBEDDED_C_COMPILER_VERSION}/bin")
+    set(CMAKE_LINKER "${CMAKE_C_COMPILER}")
+#elseif("Another compiler" STREQUAL "${EMBEDDED_C_COMPILER}")
+#
+else()
+    message(FATAL_ERROR "EMBEDDED_C_COMPILER=${EMBEDDED_C_COMPILER} is not supported")
+endif()
+check_embedded_compiler_is_set(C)
+
+# disable ID detection by the 'Modules/CMakeDetermineCCompiler.cmake'
+set(CMAKE_C_COMPILER_ID_RUN 1)
+
+# unset executable  name
+set(CMAKE_C_COMPILER_NAMES "")
+
+# unset frontend variant
+set(CMAKE_C_COMPILER_FRONTEND_VARIANT "")
+
+# avoid automatic abi detection and set all the values in the compiler's or chip's file
+set(CMAKE_C_ABI_COMPILED 1)
+
+# skip compiler test !
+set(CMAKE_C_COMPILER_WORKS 1)
+
+# reset all the initials if been set
+set(CMAKE_C_FLAGS_INIT "")
+set(CMAKE_C_FLAGS "")

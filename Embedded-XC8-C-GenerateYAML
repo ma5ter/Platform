@@ -1,0 +1,117 @@
+#message("*** ${CMAKE_CURRENT_LIST_FILE} ***")
+
+# This is a script file to generate a custom-compiler YAML for CLion
+cmake_minimum_required(VERSION 3.19)
+
+macro(increment var)
+    math(EXPR ${var} "${${var}} + 1")
+endmacro()
+
+if (NOT DEFINED CMAKE_CURRENT_BINARY_DIR)
+    message(FATAL_ERROR "CMAKE_CURRENT_BINARY_DIR undefined")
+endif ()
+
+set(compile_commands "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json")
+# file(STRINGS ...) throws an error if file doesn't exist, using CMake's internal `cat` instead
+execute_process(RESULT_VARIABLE result OUTPUT_VARIABLE json ERROR_QUIET COMMAND ${CMAKE_COMMAND} -E cat ${compile_commands})
+
+if (NOT result EQUAL 0)
+    message(FATAL_ERROR "${compile_commands} doesn't exist, make sure that project's CMakeLists.txt defines any compilable targets")
+else ()
+    string(JSON json ERROR_VARIABLE error GET ${json} 0)
+    if (NOT "NOTFOUND" STREQUAL "${error}")
+        message(FATAL_ERROR "${compile_commands}:\n${error}")
+    else ()
+        string(JSON command ERROR_VARIABLE error GET ${json} "command")
+        if (NOT "NOTFOUND" STREQUAL "${error}")
+            message(FATAL_ERROR "${compile_commands}:\n${error}")
+        else ()
+
+            # NOTE: here is a command string to compile first source file in project
+            separate_arguments(split NATIVE_COMMAND "${command}")
+            list(LENGTH split size)
+
+            if (${size} LESS 2)
+                message(FATAL_ERROR "Malformed command\n${command}")
+            else ()
+                list(GET split 0 executable)
+                unset(args)
+                unset(suffix)
+
+                set(index 1)
+                while (${index} LESS ${size})
+                    list(GET split ${index} arg)
+                    if (${arg} STREQUAL "-o")
+                        increment(index)
+                    elseif (${arg} STREQUAL "-c")
+                        increment(index)
+                        # get default source extension
+                        list(GET split ${index} arg)
+                        string(REGEX MATCH "\\.(c|cpp)$" suffix "${arg}")
+                    else ()
+                        list(APPEND args "${arg}")
+                    endif ()
+                    increment(index)
+                endwhile ()
+
+                if (NOT DEFINED suffix)
+                    message(FATAL_ERROR "Compile command for the first source file in the project\n${command}\ndoesn't contain C/C++ source")
+                else ()
+                    # options to get verbose output
+                    list(APPEND args -v -E -c "dummy${suffix}")
+                    # generate temporary source file
+                    file(WRITE "dummy${suffix}" "int main() { return 0; }\n")
+                    execute_process(RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE output COMMAND ${executable} ${args})
+                    file(REMOVE "dummy${suffix}")
+
+                    if (NOT 0 EQUAL ${result})
+                        message(FATAL_ERROR "Error executing ${executable} ${args}")
+                    else ()
+                        set(yaml ""
+                                "compilers:"
+                                "  - description: Microchip MPLAB XC8 C Compiler"
+                                "    match-compiler-exe: \"(.*/)?xc8-cc(\\\\.exe)?\""
+                                "    code-insight-target-name: pic"
+                                )
+                        separate_arguments(split NATIVE_COMMAND "${output}")
+                        foreach (chunk ${split})
+                            # find compiler parameters list [arguments]
+                            if (${chunk} MATCHES "^\\[;.*;\\]$" AND ${chunk} MATCHES ";-isystem")
+                                string(REGEX REPLACE "^\\[;|\\;]$" "" chunk ${chunk})
+                                foreach (arg ${chunk})
+                                    if (${arg} MATCHES "^-D")
+                                        string(REGEX REPLACE "^-D" "" define ${arg})
+                                        if (${define} MATCHES "=")
+                                            string(REPLACE "=" ": " define ${define})
+                                        else ()
+                                            string(APPEND define ":")
+                                        endif ()
+                                        list(APPEND defines "      ${define}")
+                                    elseif (${arg} MATCHES "^-isystem")
+                                        string(REGEX REPLACE "^-isystem" "" include ${arg})
+                                        file(TO_CMAKE_PATH ${include} include)
+                                        string(REPLACE "//" "/" include ${include})
+                                        list(APPEND includes "      - \"${include}\"")
+                                    endif ()
+                                endforeach ()
+                            endif ()
+                        endforeach ()
+
+                        list(REMOVE_DUPLICATES defines)
+                        list(JOIN defines "\n" defines)
+                        list(APPEND yaml "    include-dirs:" ${includes})
+                        list(APPEND yaml "    defines:" "${defines}")
+                        list(APPEND yaml "")
+                        list(JOIN yaml "\n" yaml)
+
+                        set(filename "${DIR}XC8.yaml")
+                        file(WRITE ${filename} ${yaml})
+                        message("*** Successfully generated ${filename} ***")
+                    endif ()
+
+                endif ()
+            endif ()
+
+        endif ()
+    endif ()
+endif ()

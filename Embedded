@@ -1,0 +1,19 @@
+# message("*** ${CMAKE_CURRENT_LIST_FILE} ***")
+
+# This file is included by the 'Modules/CMakeDetermineCCompiler.cmake'
+# after the ${CMAKE_SYSTEM_NAME}-<LANG> file
+# and before than ${CMAKE_SYSTEM_NAME}-${CMAKE_C_COMPILER_ID}-<LANG> file
+cmake_minimum_required(VERSION 3.10)
+
+# check if chip is set
+if(NOT DEFINED CHIP)
+    message(FATAL_ERROR "CHIP is not defined")
+endif()
+message(STATUS "Target chip is ${CHIP}")
+
+# set toolchain version
+# this doesn't affect any search paths generation or other things
+set(CMAKE_SYSTEM_VERSION 1.0)
+
+# disable building shared libraries for OS-less systems
+set_property(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS FALSE)

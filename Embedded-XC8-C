@@ -1,0 +1,77 @@
+# message("*** ${CMAKE_CURRENT_LIST_FILE} ***")
+
+# This file is included by the 'Modules/CMakeDetermineCCompiler.cmake'
+# after the ${CMAKE_SYSTEM_NAME} file when the compiler is set
+cmake_minimum_required(VERSION 3.10)
+
+get_filename_component(XC8CC_BIN "${CMAKE_C_COMPILER}" PATH)
+
+# NOTE: defaults of the following rule-variables are in /Modules/CMakeCInformation.cmake
+# CMAKE_C_COMPILE_OBJECT
+# CMAKE_C_LINK_EXECUTABLE
+
+# variables supplied by the generator at use time
+# <TARGET>
+# <TARGET_BASE> the target without the suffix
+# <OBJECTS>
+# <OBJECT>
+# <LINK_LIBRARIES>
+# <FLAGS>
+# <LINK_FLAGS>
+
+# C compiler information
+# <CMAKE_C_COMPILER>
+# <CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS>
+# <CMAKE_SHARED_MODULE_CREATE_C_FLAGS>
+# <CMAKE_C_LINK_FLAGS>
+
+# Static library tools
+# <CMAKE_AR>
+# <CMAKE_RANLIB>
+
+set(CMAKE_C_COMPILE_OBJECT "<CMAKE_C_COMPILER> <DEFINES> <INCLUDES> <FLAGS> -o <OBJECT> -c <SOURCE>")
+set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_C_COMPILER> <FLAGS> <CMAKE_C_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
+
+set(CMAKE_C_CREATE_STATIC_LIBRARY "")
+set(CMAKE_C_CREATE_SHARED_LIBRARY "")
+set(CMAKE_C_CREATE_MODULE_LIBRARY "")
+
+# no dynamic linking
+set(CMAKE_DL_LIBS )
+
+# The prefix & suffix for import libraries that you link to
+set(CMAKE_IMPORT_LIBRARY_PREFIX )
+set(CMAKE_IMPORT_LIBRARY_SUFFIX )
+
+# The prefix & suffix for static libraries that you link to
+set(CMAKE_STATIC_LIBRARY_PREFIX )
+set(CMAKE_STATIC_LIBRARY_SUFFIX .lib)
+
+# executable suffix
+set(CMAKE_EXECUTABLE_SUFFIX .elf)
+
+# NOTE: 'Modules/CMakeCInformation.cmake' overrides ${CMAKE_C_OUTPUT_EXTENSION}
+# to platform default ('.o' or '.obj') when set in any user file, and if no cmake's
+# 'Platform/${CMAKE_SYSTEM_NAME}*' files exists to set proper values they left intact.
+set(CMAKE_C_OUTPUT_EXTENSION .p1)
+
+# toolchain specific
+set(CMAKE_C_FLAGS_INIT "-mcpu=${CHIP}")
+set(CMAKE_EXE_LINKER_FLAGS_INIT "-mcpu=${CHIP}")
+add_compile_definitions(CHIP=${CHIP})
+
+# set compiler defaults
+set(CMAKE_C_BYTE_ORDER LITTLE_ENDIAN)
+set(CMAKE_C_SIZEOF_DATA_PTR 2)
+set(CMAKE_C_COMPILER_ABI pic18)
+
+# include chip options
+include(${CMAKE_CURRENT_LIST_DIR}/Chips/${CMAKE_SYSTEM_NAME}-${CMAKE_C_COMPILER_ID}-${CHIP}.cmake OPTIONAL)
+
+# target to generate custom-compiler YAML
+set(CMAKE_EXPORT_COMPILE_COMMANDS true)
+add_custom_target(CLion-YAML
+        COMMAND ${CMAKE_COMMAND} -D DIR=${PROJECT_SOURCE_DIR}/ -P ${CMAKE_CURRENT_LIST_FILE}-GenerateYAML
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+        VERBATIM)
+
