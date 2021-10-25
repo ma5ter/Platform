@@ -73,6 +73,31 @@ else ()
                                 "    match-compiler-exe: \"(.*/)?xc8-cc(\\\\.exe)?\""
                                 "    code-insight-target-name: pic"
                                 )
+
+                        # define stubs for non standard language extensions
+                        set(defines
+                                "__asm(...):"
+                                "__bank(...):"
+                                "__bit: char"
+                                "__compiled:"
+                                "__config(...):"
+                                "__control:"
+                                "__eeprom:"
+                                "__far:"
+                                "__int24: long"
+                                "__interrupt(...):"
+                                "__near:"
+                                "__nonreentrant:"
+                                "__nop(...):"
+                                "__persistent:"
+                                "__ram:"
+                                "__reentrant:"
+                                "__rom:"
+                                "__section(...):"
+                                "__software:"
+                                "__uint24: unsigned long"
+                                )
+
                         separate_arguments(split NATIVE_COMMAND "${output}")
                         foreach (chunk ${split})
                             # find compiler parameters list [arguments]
@@ -86,7 +111,7 @@ else ()
                                         else ()
                                             string(APPEND define ":")
                                         endif ()
-                                        list(APPEND defines "      ${define}")
+                                        list(APPEND defines "${define}")
                                     elseif (${arg} MATCHES "^-isystem")
                                         string(REGEX REPLACE "^-isystem" "" include ${arg})
                                         file(TO_CMAKE_PATH ${include} include)
@@ -97,10 +122,12 @@ else ()
                             endif ()
                         endforeach ()
 
-                        list(REMOVE_DUPLICATES defines)
-                        list(JOIN defines "\n" defines)
                         list(APPEND yaml "    include-dirs:" ${includes})
-                        list(APPEND yaml "    defines:" "${defines}")
+                        list(APPEND yaml "    defines:")
+                        list(REMOVE_DUPLICATES defines)
+                        foreach(define ${defines})
+                            list(APPEND yaml "      ${define}")
+                        endforeach()
                         list(APPEND yaml "")
                         list(JOIN yaml "\n" yaml)
 
