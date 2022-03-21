@@ -26,7 +26,7 @@ Alternatively add `.gitmodules` file into your project's folder (side by side to
 
     [submodule "Platform"]
 	    path = Platform
-	    url = git@github.com:ma5ter/Platform.git
+	    url = https://github.com/ma5ter/Platform.git
 
 And then execute `git submodule init && git submodule update`
 
