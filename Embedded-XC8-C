@@ -57,7 +57,8 @@ set(CMAKE_C_OUTPUT_EXTENSION .p1)
 
 # toolchain specific
 set(CMAKE_C_FLAGS "-mcpu=${CHIP}")
-set(CMAKE_EXE_LINKER_FLAGS "-mcpu=${CHIP}")
+# add cof file generation for tools like MPLAB IDE & Proteus VSM
+set(CMAKE_EXE_LINKER_FLAGS "-mcpu=${CHIP} -gcoff")
 add_compile_definitions(CHIP=${CHIP})
 
 # set compiler defaults
