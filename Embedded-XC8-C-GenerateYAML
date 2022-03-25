@@ -78,6 +78,10 @@ else ()
                         set(defines
                                 "__asm(...):"
                                 "__bank(...):"
+                                "__bank0:"
+                                "__bank1:"
+                                "__bank2:"
+                                "__bank3:"
                                 "__bit: char"
                                 "__compiled:"
                                 "__config(...):"
