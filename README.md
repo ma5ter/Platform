@@ -22,6 +22,14 @@ First of all just clone this repository into your project's folder (side by side
 
     git clone --depth 1 https://github.com/ma5ter/Platform.git
 
+Alternatively add `.gitmodules` file into your project's folder (side by side to the main `CMakeLists.txt` file) and put this content inside:
+
+    [submodule "Platform"]
+	    path = Platform
+	    url = https://github.com/ma5ter/Platform.git
+
+And then execute `git submodule init && git submodule update`
+
 Make sure that folder name with the content is unchanged and named as `Platform`
 
 Add into the project's `CMakeLists.txt` file following required variables:
